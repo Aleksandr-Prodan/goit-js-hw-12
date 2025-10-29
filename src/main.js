@@ -17,6 +17,7 @@ const loadMoreBtn = document.querySelector('.js-load-more');
 let query = '';
 let page = 1;
 let totalHits = 0;
+const perPage = 15;
 
 form.addEventListener('submit', onFormSubmit);
 loadMoreBtn.addEventListener('click', onLoadMore);
@@ -51,8 +52,16 @@ async function onFormSubmit(event) {
     }
 
     createGallery(data.hits);
-
-    if (totalHits > 15) showLoadMoreButton();
+    
+    if (totalHits > perPage) {
+      showLoadMoreButton();
+    } else {
+      hideLoadMoreButton();
+      iziToast.info({
+        title: 'End of results',
+        message: "We're sorry, but you've reached the end of search results.",
+      });
+    }
   } catch (error) {
     iziToast.error({
       title: 'Error',
@@ -64,6 +73,7 @@ async function onFormSubmit(event) {
 }
 
 async function onLoadMore() {
+  hideLoadMoreButton();
   page += 1;
   showLoader();
 
@@ -74,7 +84,10 @@ async function onLoadMore() {
     smoothScroll();
 
     const loadedImages = document.querySelectorAll('.gallery-item').length;
-    if (loadedImages >= totalHits) {
+
+    if (loadedImages < totalHits) {
+      showLoadMoreButton();
+    } else {
       hideLoadMoreButton();
       iziToast.info({
         title: 'End of results',
@@ -92,9 +105,10 @@ async function onLoadMore() {
 }
 
 function smoothScroll() {
-  const { height: cardHeight } = document
-    .querySelector('.gallery')
-    .firstElementChild.getBoundingClientRect();
+  const firstCard = document.querySelector('.gallery')?.firstElementChild;
+  if (!firstCard) return;
+
+  const { height: cardHeight } = firstCard.getBoundingClientRect();
 
   window.scrollBy({
     top: cardHeight * 2,
